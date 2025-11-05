@@ -3,12 +3,15 @@
 # @author: Simone Orsi <simahawk@gmail.com>
 # License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl).
 
+import base64
+
 import mock
 from freezegun import freeze_time
 
 from odoo import exceptions, fields
 from odoo.tools import mute_logger
 
+from odoo.addons.edi_oca.utils import get_checksum
 from odoo.addons.queue_job.delay import DelayableRecordset
 
 from .common import EDIBackendCommonTestCase
@@ -139,7 +142,7 @@ class EDIRecordTestCase(EDIBackendCommonTestCase):
         )
         self.exchange_type_in.job_channel_id = channel
         # re-enable job delayed feature
-        delayed = record.with_context(test_queue_job_no_delay=False).with_delay()
+        delayed = record.with_context(queue_job__no_delay=False).with_delay()
         # Silent useless warning
         # `Delayable Delayable(edi.exchange.record*) was prepared but never delayed`
         delayed.delayable._generated_job = object()
@@ -216,3 +219,19 @@ class EDIRecordTestCase(EDIBackendCommonTestCase):
             mocked.assert_not_called()
         self.assertEqual(record0.edi_exchange_state, "output_pending")
         self.assertFalse(record0.retryable)
+
+    def test_checksum(self):
+        filecontent = base64.b64encode(b"ABC")
+        checksum1 = get_checksum(filecontent)
+        vals = {
+            "model": self.partner._name,
+            "res_id": self.partner.id,
+            "exchange_file": filecontent,
+        }
+        record0 = self.backend.create_record("test_csv_output", vals)
+        self.assertEqual(record0.exchange_filechecksum, checksum1)
+        filecontent = base64.b64encode(b"DEF")
+        checksum2 = get_checksum(filecontent)
+        record0.exchange_file = filecontent
+        self.assertEqual(record0.exchange_filechecksum, checksum2)
+        self.assertNotEqual(record0.exchange_filechecksum, checksum1)

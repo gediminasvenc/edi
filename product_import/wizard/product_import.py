@@ -139,6 +139,7 @@ class ProductImport(models.TransientModel):
                     and s_info.price == seller_info["price"]
                     and s_info.currency_id.id == seller_info["currency_id"]
                     and s_info.company_id.id == seller_info["company_id"]
+                    and s_info.delay == seller_info["delay"]
                 ):
                     seller_id = s_info.id
                 else:
@@ -187,6 +188,7 @@ class ProductImport(models.TransientModel):
             "currency_id": currency.id,
             "min_qty": parsed_product["min_qty"],
             "company_id": product_company_id,
+            "delay": parsed_product.get("sale_delay", 0),
         }
         product_vals["seller_ids"] = self._prepare_supplierinfo(seller_info, product)
         if product:
@@ -204,7 +206,13 @@ class ProductImport(models.TransientModel):
             product.write(product_vals)
             logger.info("Product %d updated", product.id)
         else:
+            product_active = product_vals.pop("active")
             product = self.env["product.product"].create(product_vals)
+            if not product_active:
+                # Product created first, then archived in order to replicate
+                # all characteristics into product.template
+                product.flush()
+                product.action_archive()
             logger.info("Product %d created", product.id)
         return product
 

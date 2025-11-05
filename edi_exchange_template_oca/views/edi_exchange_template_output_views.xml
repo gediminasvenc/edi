@@ -3,7 +3,7 @@
     <record id="edi_exchange_template_output_view_tree" model="ir.ui.view">
         <field name="model">edi.exchange.template.output</field>
         <field name="arch" type="xml">
-            <tree string="EDI Exchange Template Output">
+            <tree>
                 <field name="backend_type_id" />
                 <field name="backend_id" />
                 <field name="name" />
@@ -27,7 +27,12 @@
                         <group name="main">
                             <field name="backend_type_id" />
                             <field name="backend_id" />
-                            <field name="type_id" />
+                            <field
+                                name="type_id"
+                                string="Type (deprecated)"
+                                help="Use allowed types and set the template explicitly on the type"
+                            />
+                            <field name="allowed_type_ids" widget="many2many_tags" />
                             <field name="code" />
                             <field name="output_type" />
                             <field name="generator" />

@@ -14,7 +14,7 @@ from .common import EDIBackendCommonComponentRegistryTestCase
 from .fake_components import FakeInputProcess
 
 
-class EDIBackendTestCase(EDIBackendCommonComponentRegistryTestCase):
+class EDIBackendTestProcessCase(EDIBackendCommonComponentRegistryTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -62,13 +62,25 @@ class EDIBackendTestCase(EDIBackendCommonComponentRegistryTestCase):
                 }
             ],
         )
+        self.assertIn(
+            "OOPS! Something went wrong :(", self.record.exchange_error_traceback
+        )
 
     @mute_logger("odoo.models.unlink")
     def test_process_no_file_record(self):
         self.record.write({"edi_exchange_state": "input_received"})
         self.record.exchange_file = False
+        self.exchange_type_in.allow_empty_files_on_receive = False
         with self.assertRaises(UserError):
             self.record.action_exchange_process()
+
+    @mute_logger("odoo.models.unlink")
+    def test_process_allow_no_file_record(self):
+        self.record.write({"edi_exchange_state": "input_received"})
+        self.record.exchange_file = False
+        self.exchange_type_in.allow_empty_files_on_receive = True
+        self.record.action_exchange_process()
+        self.assertEqual(self.record.edi_exchange_state, "input_processed")
 
     def test_process_outbound_record(self):
         vals = {

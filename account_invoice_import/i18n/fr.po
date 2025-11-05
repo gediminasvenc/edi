@@ -9,15 +9,15 @@ msgstr ""
 "Project-Id-Version: Odoo Server 10.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2018-01-29 11:54+0000\n"
-"PO-Revision-Date: 2023-05-29 11:08+0000\n"
-"Last-Translator: Claude R Perrin <claude@perrin.it>\n"
+"PO-Revision-Date: 2025-10-02 14:42+0000\n"
+"Last-Translator: Marwan Behillil <marwan.behillil@gmail.com>\n"
 "Language-Team: French (https://www.transifex.com/oca/teams/23907/fr/)\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: \n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 4.17\n"
+"X-Generator: Weblate 5.10.4\n"
 
 #. module: account_invoice_import
 #: code:addons/account_invoice_import/models/account_move.py:0
@@ -181,6 +181,7 @@ msgstr "Devise"
 #. module: account_invoice_import
 #: model:ir.model.fields,field_description:account_invoice_import.field_account_invoice_import__display_name
 #: model:ir.model.fields,field_description:account_invoice_import.field_account_invoice_import_config__display_name
+#: model:ir.model.fields,field_description:account_invoice_import.field_account_journal__display_name
 #: model:ir.model.fields,field_description:account_invoice_import.field_account_move__display_name
 #: model:ir.model.fields,field_description:account_invoice_import.field_res_company__display_name
 #: model:ir.model.fields,field_description:account_invoice_import.field_res_config_settings__display_name
@@ -247,6 +248,7 @@ msgstr "Grouper par"
 #. module: account_invoice_import
 #: model:ir.model.fields,field_description:account_invoice_import.field_account_invoice_import__id
 #: model:ir.model.fields,field_description:account_invoice_import.field_account_invoice_import_config__id
+#: model:ir.model.fields,field_description:account_invoice_import.field_account_journal__id
 #: model:ir.model.fields,field_description:account_invoice_import.field_account_move__id
 #: model:ir.model.fields,field_description:account_invoice_import.field_res_company__id
 #: model:ir.model.fields,field_description:account_invoice_import.field_res_config_settings__id
@@ -262,7 +264,6 @@ msgstr "Si coché, de nouveaux messages demandent votre attention."
 
 #. module: account_invoice_import
 #: model:ir.model.fields,help:account_invoice_import.field_account_invoice_import__message_has_error
-#: model:ir.model.fields,help:account_invoice_import.field_account_invoice_import__message_has_sms_error
 msgid "If checked, some messages have a delivery error."
 msgstr "Si coché, certains messages ont une erreur d’envoi."
 
@@ -314,7 +315,7 @@ msgstr "Importation des factures"
 #. module: account_invoice_import
 #: model_terms:ir.ui.view,arch_db:account_invoice_import.view_move_form
 msgid "Import Invoice File"
-msgstr "Importer un fichier de factures"
+msgstr "Importer une facture"
 
 #. module: account_invoice_import
 #: model_terms:ir.ui.view,arch_db:account_invoice_import.view_move_form
@@ -330,7 +331,7 @@ msgstr "Importer une facture ou un remboursement d'un fournisseur"
 #: model:ir.actions.act_window,name:account_invoice_import.account_invoice_import_action
 #: model:ir.ui.menu,name:account_invoice_import.account_invoice_import_menu
 msgid "Import Vendor Bill"
-msgstr "Importer la facture du fournisseur"
+msgstr "Importer une facture fournisseur"
 
 #. module: account_invoice_import
 #: code:addons/account_invoice_import/wizard/account_invoice_import.py:0
@@ -357,7 +358,6 @@ msgid "Invoice Import Configuration"
 msgstr "Configuration de l'import de factures"
 
 #. module: account_invoice_import
-#: model_terms:ir.ui.view,arch_db:account_invoice_import.account_invoice_import_config_tree
 #: model_terms:ir.ui.view,arch_db:account_invoice_import.view_partner_property_form
 msgid "Invoice Import Configurations"
 msgstr "Configurations de l'import de factures"
@@ -373,6 +373,11 @@ msgid "Is Follower"
 msgstr "Est un abonné"
 
 #. module: account_invoice_import
+#: model:ir.model,name:account_invoice_import.model_account_journal
+msgid "Journal"
+msgstr "Journal"
+
+#. module: account_invoice_import
 #: model:ir.model,name:account_invoice_import.model_account_move
 msgid "Journal Entry"
 msgstr "Entrée de Journal"
@@ -380,6 +385,7 @@ msgstr "Entrée de Journal"
 #. module: account_invoice_import
 #: model:ir.model.fields,field_description:account_invoice_import.field_account_invoice_import____last_update
 #: model:ir.model.fields,field_description:account_invoice_import.field_account_invoice_import_config____last_update
+#: model:ir.model.fields,field_description:account_invoice_import.field_account_journal____last_update
 #: model:ir.model.fields,field_description:account_invoice_import.field_account_move____last_update
 #: model:ir.model.fields,field_description:account_invoice_import.field_res_company____last_update
 #: model:ir.model.fields,field_description:account_invoice_import.field_res_config_settings____last_update
@@ -445,12 +451,12 @@ msgstr "Multiligne, produit sélectionné automatiquement"
 #. module: account_invoice_import
 #: model:ir.model.fields.selection,name:account_invoice_import.selection__account_invoice_import_config__invoice_line_method__nline_no_product
 msgid "Multi Line, No Product"
-msgstr "Multiligne, pas de produit"
+msgstr "Multiligne, sans produit"
 
 #. module: account_invoice_import
 #: model:ir.model.fields.selection,name:account_invoice_import.selection__account_invoice_import_config__invoice_line_method__nline_static_product
 msgid "Multi Line, Static Product"
-msgstr "Multiligne, produit fixé"
+msgstr "Multiligne, produit fixe"
 
 #. module: account_invoice_import
 #: model:ir.model.fields,field_description:account_invoice_import.field_account_invoice_import_config__name
@@ -466,7 +472,7 @@ msgstr "Nombre d'actions"
 #: model:ir.model.fields,field_description:account_invoice_import.field_res_partner__invoice_import_count
 #: model:ir.model.fields,field_description:account_invoice_import.field_res_users__invoice_import_count
 msgid "Number of Invoice Import Configurations"
-msgstr "nombre de configurations d’import de factures"
+msgstr "Nombre de configurations d’import de factures"
 
 #. module: account_invoice_import
 #: model:ir.model.fields,field_description:account_invoice_import.field_account_invoice_import__message_has_error_counter
@@ -526,11 +532,6 @@ msgid "Refund"
 msgstr "Remboursement"
 
 #. module: account_invoice_import
-#: model:ir.model.fields,field_description:account_invoice_import.field_account_invoice_import__message_has_sms_error
-msgid "SMS Delivery error"
-msgstr "Erreur d’envoi de SMS"
-
-#. module: account_invoice_import
 #: model_terms:ir.ui.view,arch_db:account_invoice_import.account_invoice_import_config_search
 msgid "Search Invoice Import Configurations"
 msgstr "Recherche des configurations d'import de factures"
@@ -548,12 +549,12 @@ msgstr "Séquence"
 #. module: account_invoice_import
 #: model:ir.model.fields.selection,name:account_invoice_import.selection__account_invoice_import_config__invoice_line_method__1line_no_product
 msgid "Single Line, No Product"
-msgstr "Ligne unique, pas de produit"
+msgstr "Ligne unique, sans produit"
 
 #. module: account_invoice_import
 #: model:ir.model.fields.selection,name:account_invoice_import.selection__account_invoice_import_config__invoice_line_method__1line_static_product
 msgid "Single Line, Static Product"
-msgstr "Ligne unique, produit fixé"
+msgstr "Ligne unique, produit fixe"
 
 #. module: account_invoice_import
 #: model_terms:ir.ui.view,arch_db:account_invoice_import.account_invoice_import_form
@@ -806,7 +807,7 @@ msgstr "Mettre à jour le fournisseur existant"
 #. module: account_invoice_import
 #: model:ir.model.fields.selection,name:account_invoice_import.selection__account_invoice_import__state__update-from-invoice
 msgid "Update From Invoice"
-msgstr "Mise à jour depuis la facture"
+msgstr "Mise à jour à partir de la facture"
 
 #. module: account_invoice_import
 #: model_terms:ir.ui.view,arch_db:account_invoice_import.account_invoice_import_form
@@ -960,6 +961,9 @@ msgstr "e-mail envoyé par <b>%s</b> le %s avec l'objet <b>%s</b>"
 #, python-format
 msgid "unspecified"
 msgstr "non renseigné"
+
+#~ msgid "SMS Delivery error"
+#~ msgstr "Erreur d’envoi de SMS"
 
 #~ msgid ""
 #~ "This type of PDF invoice is not supported. Did you install the module to "

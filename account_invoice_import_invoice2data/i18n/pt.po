@@ -22,6 +22,18 @@ msgid "<b>regular PDF</b> file without any embedded XML file via the"
 msgstr "arquivo <b>PDF regular</b> sem qualquer arquivo XML incorporado via"
 
 #. module: account_invoice_import_invoice2data
+#: model:product.product,description_sale:account_invoice_import_invoice2data.product_beeswax_xl
+#: model:product.template,description_sale:account_invoice_import_invoice2data.product_beeswax_xl_product_template
+msgid "Acme beeswax"
+msgstr ""
+
+#. module: account_invoice_import_invoice2data
+#: model:product.product,name:account_invoice_import_invoice2data.product_beeswax_xl
+#: model:product.template,name:account_invoice_import_invoice2data.product_beeswax_xl_product_template
+msgid "Beeswax XL"
+msgstr ""
+
+#. module: account_invoice_import_invoice2data
 #: model:ir.model.fields,field_description:account_invoice_import_invoice2data.field_account_invoice_import__display_name
 msgid "Display Name"
 msgstr ""
@@ -43,18 +55,22 @@ msgid "Last Modified on"
 msgstr ""
 
 #. module: account_invoice_import_invoice2data
-#: code:addons/account_invoice_import_invoice2data/wizard/account_invoice_import.py:0
-#, python-format
-msgid "PDF Invoice parsing failed. Error message: %s"
-msgstr "Análise de fatura PDF falhou. Mensagem de erro: %s"
+#: model:product.product,name:account_invoice_import_invoice2data.luxury_truffles
+#: model:product.template,name:account_invoice_import_invoice2data.luxury_truffles_product_template
+msgid "Luxury Truffles"
+msgstr ""
+
+#. module: account_invoice_import_invoice2data
+#: model:product.product,name:account_invoice_import_invoice2data.olive_oil
+#: model:product.template,name:account_invoice_import_invoice2data.olive_oil_product_template
+msgid "Olive Oil"
+msgstr ""
 
 #. module: account_invoice_import_invoice2data
 #: code:addons/account_invoice_import_invoice2data/wizard/account_invoice_import.py:0
 #, python-format
-msgid ""
-"This PDF invoice doesn't match a known template of the invoice2data lib."
-msgstr ""
-"Esta fatura PDF não combina com um modelo conhecido do invoice2data lib."
+msgid "PDF Invoice parsing failed. Error message: %s"
+msgstr "Análise de fatura PDF falhou. Mensagem de erro: %s"
 
 #. module: account_invoice_import_invoice2data
 #: model:product.product,uom_name:account_invoice_import_invoice2data.internet_access
@@ -73,6 +89,12 @@ msgid "invoice2data"
 msgstr ""
 
 #. module: account_invoice_import_invoice2data
+#: model:product.product,uom_name:account_invoice_import_invoice2data.product_beeswax_xl
+#: model:product.template,uom_name:account_invoice_import_invoice2data.product_beeswax_xl_product_template
+msgid "kg"
+msgstr ""
+
+#. module: account_invoice_import_invoice2data
 #: model_terms:ir.ui.view,arch_db:account_invoice_import_invoice2data.account_invoice_import_form
 msgid ""
 "library (reads the text of the PDF and get the information). It will work "
@@ -81,3 +103,9 @@ msgid ""
 msgstr ""
 "biblioteca (lê o texto do PDF e obtém a informação). Apenas funcionará se a "
 "biblioteca de invoice2data tiver um modelo para as faturas deste fornecedor."
+
+#, python-format
+#~ msgid ""
+#~ "This PDF invoice doesn't match a known template of the invoice2data lib."
+#~ msgstr ""
+#~ "Esta fatura PDF não combina com um modelo conhecido do invoice2data lib."

@@ -30,8 +30,10 @@ PARSED_CATALOG = {
             "price": 12.55,
             "product_code": "MNTR011",
             "uom": {"unece_code": False},
+            "sale_delay": 3,
         },
         {
+            # Archived product
             "barcode": "1234567890124",
             "code": "MNTR012",
             "currency": {"iso": "EUR"},
@@ -43,6 +45,8 @@ PARSED_CATALOG = {
             "price": 91.5,
             "product_code": "MNTR012",
             "uom": {"unece_code": "C62"},
+            "active": False,
+            "sale_delay": 1,
         },
     ],
     "ref": "1387",
@@ -83,11 +87,14 @@ class TestProductImport(TestCommon):
         self.assertEqual(company_id, self.env.ref("base.main_company").id)
 
     def test_product_import(self):
+        # product.product
         products = self.wiz_model._create_products(
             self.parsed_catalog, seller=self.supplier
         )
         self.assertEqual(len(products), 3)
         for product, parsed in zip(products, PARSED_CATALOG["products"]):
+
+            # Expected
             expected = {
                 "code": parsed["code"],
                 "seller": PARSED_CATALOG["seller"]["name"],
@@ -97,7 +104,10 @@ class TestProductImport(TestCommon):
                 "type": "product",
                 "uom_id": 1,  # Units
                 "uom_po_id": 1,
+                "active": parsed.get("active", True),
             }
+
+            # product.product "Product Variant"
             [p_supplierinfo] = product.seller_ids
             p_values = {
                 "code": product.default_code,
@@ -108,11 +118,29 @@ class TestProductImport(TestCommon):
                 "type": product.type,
                 "uom_id": product.uom_id.id,
                 "uom_po_id": product.uom_po_id.id,
+                "active": product.active,
             }
             for key in "name", "barcode", "description":
                 expected[key] = parsed[key]
                 p_values[key] = getattr(product, key)
+
+            # product.template "Product"
+            product_tmpl = product.product_tmpl_id
+            pt_values = {
+                **p_values,
+                "code": product_tmpl.default_code,
+                "uom_id": product_tmpl.uom_id.id,
+                "uom_po_id": product_tmpl.uom_po_id.id,
+            }
+            for key in "name", "barcode", "description", "type", "active":
+                pt_values[key] = getattr(product_tmpl, key)
+
             self.assertEqual(p_values, expected)
+            self.assertEqual(pt_values, expected)
+            self.assertEqual(product.seller_ids, product_tmpl.seller_ids)
+            self.assertEqual(
+                product.seller_ids.mapped("delay")[0], parsed.get("sale_delay", 0)
+            ),
 
     def test_import_button(self):
         form = self.wiz_form

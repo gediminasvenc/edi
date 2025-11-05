@@ -14,7 +14,7 @@ from .fake_components import (
 )
 
 
-class EDIBackendTestCase(EDIBackendCommonComponentRegistryTestCase):
+class EDIBackendTestValidateCase(EDIBackendCommonComponentRegistryTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -66,6 +66,7 @@ class EDIBackendTestCase(EDIBackendCommonComponentRegistryTestCase):
                 }
             ],
         )
+        self.assertIn("Data seems wrong!", self.record_in.exchange_error_traceback)
 
     def test_generate_validate_record(self):
         self.record_out.write({"edi_exchange_state": "new"})
@@ -88,6 +89,32 @@ class EDIBackendTestCase(EDIBackendCommonComponentRegistryTestCase):
                 {
                     "edi_exchange_state": "validate_error",
                     "exchange_error": "Data seems wrong!",
+                }
+            ],
+        )
+        self.assertIn("Data seems wrong!", self.record_out.exchange_error_traceback)
+
+    def test_validate_record_error_regenerate(self):
+        self.record_out.write({"edi_exchange_state": "new"})
+        exc = EDIValidationError("Data seems wrong!")
+        self.backend.with_context(test_break_validate=exc).exchange_generate(
+            self.record_out
+        )
+        self.assertRecordValues(
+            self.record_out,
+            [
+                {
+                    "edi_exchange_state": "validate_error",
+                }
+            ],
+        )
+        self.record_out.with_context(fake_output="yeah!").action_regenerate()
+        self.assertEqual(self.record_out._get_file_content(), "yeah!")
+        self.assertRecordValues(
+            self.record_out,
+            [
+                {
+                    "edi_exchange_state": "output_pending",
                 }
             ],
         )

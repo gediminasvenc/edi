@@ -5,9 +5,12 @@
 
 import base64
 import logging
+from ast import literal_eval
 from collections import defaultdict
 
 from odoo import _, api, exceptions, fields, models
+
+from ..utils import exchange_record_job_identity_exact, get_checksum
 
 _logger = logging.getLogger(__name__)
 
@@ -50,6 +53,9 @@ class EDIExchangeRecord(models.Model):
     exchange_filename = fields.Char(
         compute="_compute_exchange_filename", readonly=False, store=True
     )
+    exchange_filechecksum = fields.Char(
+        compute="_compute_exchange_filechecksum", store=True
+    )
     exchanged_on = fields.Datetime(
         string="Exchanged on",
         help="Sent or received on this date.",
@@ -82,6 +88,9 @@ class EDIExchangeRecord(models.Model):
         ],
     )
     exchange_error = fields.Text(string="Exchange error", readonly=True, copy=False)
+    exchange_error_traceback = fields.Text(
+        string="Exchange error traceback", readonly=True, copy=False
+    )
     # Relations w/ other records
     parent_id = fields.Many2one(
         comodel_name="edi.exchange.record",
@@ -101,6 +110,7 @@ class EDIExchangeRecord(models.Model):
         help="ACK generated for current exchange.",
         compute="_compute_ack_exchange_id",
         store=True,
+        index=True,
     )
     ack_received_on = fields.Datetime(
         string="ACK received on", related="ack_exchange_id.exchanged_on"
@@ -109,6 +119,10 @@ class EDIExchangeRecord(models.Model):
         compute="_compute_retryable",
         help="The record state can be rolled back manually in case of failure.",
     )
+    related_queue_jobs_count = fields.Integer(
+        compute="_compute_related_queue_jobs_count"
+    )
+    company_id = fields.Many2one("res.company", string="Company")
 
     _sql_constraints = [
         ("identifier_uniq", "unique(identifier)", "The identifier must be unique."),
@@ -132,6 +146,14 @@ class EDIExchangeRecord(models.Model):
                 continue
             if not rec.exchange_filename:
                 rec.exchange_filename = rec.type_id._make_exchange_filename(rec)
+
+    @api.depends("exchange_file")
+    def _compute_exchange_filechecksum(self):
+        for rec in self:
+            content = rec.exchange_file or ""
+            if not isinstance(content, bytes):
+                content = content.encode()
+            rec.exchange_filechecksum = get_checksum(content)
 
     @api.depends("edi_exchange_state")
     def _compute_exchanged_on(self):
@@ -212,11 +234,17 @@ class EDIExchangeRecord(models.Model):
     ):
         """Handy method to not have to convert b64 back and forth."""
         self.ensure_one()
+        encoding = self.type_id.encoding or "UTF-8"
+        decoding_error_handler = self.type_id.encoding_in_error_handler or "strict"
         if not self[field_name]:
             return ""
         if binary:
             res = base64.b64decode(self[field_name])
-            return res.decode() if not as_bytes else res
+            return (
+                res.decode(encoding, errors=decoding_error_handler)
+                if not as_bytes
+                else res
+            )
         return self[field_name]
 
     def name_get(self):
@@ -237,13 +265,14 @@ class EDIExchangeRecord(models.Model):
             rec._execute_next_action()
         return rec
 
+    @api.model
     def _get_identifier(self):
         return self.env["ir.sequence"].next_by_code("edi.exchange")
 
     def _quick_exec_enabled(self):
         if self.env.context.get("edi__skip_quick_exec"):
             return False
-        return self.type_id.quick_exec
+        return self.type_id.quick_exec and self.backend_id.active
 
     def _execute_next_action(self):
         # The backend already knows how to handle records
@@ -272,13 +301,14 @@ class EDIExchangeRecord(models.Model):
     def _exchange_status_messages(self):
         return {
             # status: message
+            "generate_ok": _("Exchange data generated"),
             "send_ok": _("Exchange sent"),
             "send_ko": _(
                 "An error happened while sending. Please check exchange record info."
             ),
-            "process_ok": _("Exchange processed successfully "),
+            "process_ok": _("Exchange processed successfully"),
             "process_ko": _("Exchange processed with errors"),
-            "receive_ok": _("Exchange received successfully "),
+            "receive_ok": _("Exchange received successfully"),
             "receive_ko": _("Exchange not received"),
             "ack_received": _("ACK file received."),
             "ack_missing": _("ACK file is required for this exchange but not found."),
@@ -292,6 +322,9 @@ class EDIExchangeRecord(models.Model):
     def action_exchange_generate(self, **kw):
         self.ensure_one()
         return self.backend_id.exchange_generate(self, **kw)
+
+    def action_exchange_generate_send(self, **kw):
+        return self.backend_id.exchange_generate_send(self, **kw)
 
     def action_exchange_send(self):
         self.ensure_one()
@@ -341,6 +374,10 @@ class EDIExchangeRecord(models.Model):
         if self._quick_exec_enabled():
             self._execute_next_action()
         return True
+
+    def action_regenerate(self):
+        for rec in self:
+            rec.action_exchange_generate(force=True)
 
     def action_open_related_record(self):
         self.ensure_one()
@@ -453,8 +490,8 @@ class EDIExchangeRecord(models.Model):
             count=False,
             access_rights_uid=access_rights_uid,
         )
-        if self.env.is_system():
-            # restrictions do not apply to group "Settings"
+        if self.env.is_superuser():
+            # restrictions do not apply for the superuser
             return len(ids) if count else ids
 
         # TODO highlight orphaned EDI records in UI:
@@ -499,11 +536,14 @@ class EDIExchangeRecord(models.Model):
                         list(targets[res_id]),
                     )
                 recs = recs - missing
-            allowed = (
+            allowed = list(
                 self.env[model]
                 .with_context(active_test=False)
                 ._search([("id", "in", recs.ids)])
             )
+            if self.env.is_system():
+                # Group "Settings" can list exchanges where record is deleted
+                allowed.extend(missing.ids)
             for target_id in allowed:
                 result += list(targets[target_id])
         if len(orig_ids) == limit and len(result) < len(orig_ids):
@@ -530,7 +570,7 @@ class EDIExchangeRecord(models.Model):
     def check_access_rule(self, operation):
         """In order to check if we can access a record, we are checking if we can access
         the related document"""
-        super(EDIExchangeRecord, self).check_access_rule(operation)
+        super().check_access_rule(operation)
         if self.env.is_superuser():
             return
         default_checker = self.env["edi.exchange.consumer.mixin"].get_edi_access
@@ -564,9 +604,48 @@ class EDIExchangeRecord(models.Model):
         channel = self.type_id.sudo().job_channel_id
         if channel:
             params["channel"] = channel.complete_name
+        # Avoid generating the same job for the same record if existing
+        params["identity_key"] = exchange_record_job_identity_exact
         return params
 
     def with_delay(self, **kw):
         params = self._job_delay_params()
         params.update(kw)
         return super().with_delay(**params)
+
+    def delayable(self, **kw):
+        params = self._job_delay_params()
+        params.update(kw)
+        return super().delayable(**params)
+
+    def _job_retry_params(self):
+        return {}
+
+    def _compute_related_queue_jobs_count(self):
+        for rec in self:
+            # TODO: We should refactor the object field on queue_job to use jsonb field
+            # so that we can search directly into it.
+            rec.related_queue_jobs_count = rec.env["queue.job"].search_count(
+                [("func_string", "like", str(rec))]
+            )
+
+    def action_view_related_queue_jobs(self):
+        self.ensure_one()
+        xmlid = "queue_job.action_queue_job"
+        action = self.env["ir.actions.act_window"]._for_xml_id(xmlid)
+        # Searching based on task name. Ex: `edi.exchange.record(1,).action_exchange_send()`
+        # TODO: We should refactor the object field on queue_job to use jsonb field
+        # so that we can search directly into it.
+        action["domain"] = [("func_string", "like", str(self))]
+        # Purge default search filters from ctx to avoid hiding records
+        ctx = action.get("context", {})
+        if isinstance(ctx, str):
+            ctx = literal_eval(ctx)
+        # Update the current contexts
+        ctx.update(self.env.context)
+        action["context"] = {
+            k: v for k, v in ctx.items() if not k.startswith("search_default_")
+        }
+        # Drop ID otherwise the context will be loaded from the action's record
+        action.pop("id")
+        return action

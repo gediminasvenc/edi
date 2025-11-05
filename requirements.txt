@@ -1,10 +1,11 @@
 # generated from manifests external_dependencies
-dateparser==1.1.1
+dateparser
 factur-x
+factur-x<=3.1
 invoice2data
 ovh
-pdfplumber
 phonenumbers
+pypdf>=3.1.0,<5.0
 pyyaml
 regex
 xmlschema

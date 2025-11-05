@@ -2,17 +2,11 @@
 # @author: Simone Orsi <simahawk@gmail.com>
 # License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl).
 
-# import mock
-# from freezegun import freeze_time
-
-# from odoo import fields
-# from odoo.exceptions import UserError
-
 from .common import EDIBackendCommonComponentRegistryTestCase
 from .fake_components import FakeInputReceive
 
 
-class EDIBackendTestCase(EDIBackendCommonComponentRegistryTestCase):
+class EDIBackendTestInputCase(EDIBackendCommonComponentRegistryTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -48,4 +42,31 @@ class EDIBackendTestCase(EDIBackendCommonComponentRegistryTestCase):
         self.record.edi_exchange_state = "input_pending"
         self.backend.with_context(fake_output="yeah!").exchange_receive(self.record)
         self.assertEqual(self.record._get_file_content(), "yeah!")
+        self.assertRecordValues(self.record, [{"edi_exchange_state": "input_received"}])
+
+    def test_receive_no_allow_empty_file_record(self):
+        self.record.edi_exchange_state = "input_pending"
+        self.backend.with_context(
+            fake_output="", _edi_receive_break_on_error=False
+        ).exchange_receive(self.record)
+        # Check the record
+        msg = "Empty files are not allowed for exchange type %(name)s (%(code)s)" % {
+            "name": self.exchange_type_in.name,
+            "code": self.exchange_type_in.code,
+        }
+        self.assertEqual(msg, self.record.exchange_error)
+        self.assertIn(msg, self.record.exchange_error_traceback)
+        self.assertEqual(self.record._get_file_content(), "")
+        self.assertRecordValues(
+            self.record, [{"edi_exchange_state": "input_receive_error"}]
+        )
+
+    def test_receive_allow_empty_file_record(self):
+        self.record.edi_exchange_state = "input_pending"
+        self.record.type_id.allow_empty_files_on_receive = True
+        self.backend.with_context(
+            fake_output="", _edi_receive_break_on_error=False
+        ).exchange_receive(self.record)
+        # Check the record
+        self.assertEqual(self.record._get_file_content(), "")
         self.assertRecordValues(self.record, [{"edi_exchange_state": "input_received"}])
